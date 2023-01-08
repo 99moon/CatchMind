@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="chatMapper">
+
+	<resultMap type="hashMap" id="userNoMap"></resultMap>
+	<resultMap type="hashMap" id="roomTimeMap"></resultMap>
+	
+	<resultMap type="chat" id="chatResultSet">
+		<result column="ROOM_NO" property="roomNo"/>
+		<result column="USER_NO" property="writer"/>
+		<result column="CHAT_CONTENT" property="chatContent"/>
+		<result column="CHAT_TIME" property="chatTime"/>
+	</resultMap>
+	
+	<resultMap type="chatReport" id="chatReportResultSet">
+		<result column="USER_NO" property="userNo"/>
+		<result column="REPORTED_FROM" property="reportedFrom"/>
+		<result column="REPORTED_FOR" property="reportedFor"/>
+	</resultMap>
+	
+	<select id="getRoomNo" parameterType="HashMap" resultType="_int">
+		SELECT ROOM_NO
+		FROM CHATROOMS
+		WHERE USER_NO1 = #{userNo1}
+		AND USER_NO2 = #{userNo2}
+	</select>
+	
+	<insert id="createRoomNo" parameterType="HashMap">
+		INSERT INTO CHATROOMS
+		VALUES(SEQ_CRNO.NEXTVAL, #{userNo1}, #{userNo2}, SYSDATE, SYSDATE)
+	</insert>
+	
+	<update id="chatRequest" parameterType="HashMap">
+		UPDATE CHATCLAIM
+		SET CLAIM_FROM = #{userNo1}
+		WHERE USER_NO = #{userNo2}
+	</update>
+	
+	<update id="cancelRequest" parameterType="_int">
+		UPDATE CHATCLAIM
+		SET CLAIM_FROM = 0
+		WHERE USER_NO = #{userNo}
+	</update>
+	
+	<select id="getUsers" parameterType="_int" resultMap="userNoMap">
+		SELECT USER_NO1, USER_NO2
+		FROM CHATROOMS
+		WHERE ROOM_NO = #{roomNo}
+	</select>
+	
+	<select id="requestExistence" parameterType="_int" resultType="_int">
+		SELECT CLAIM_FROM
+		FROM CHATCLAIM
+		WHERE USER_NO = #{requestTo}
+	</select>
+	
+	<update id="chatAgreed" parameterType="HashMap">
+		UPDATE CHATCLAIM
+		SET CLAIM_FROM = #{userNo1}
+		WHERE USER_NO = #{userNo2}
+	</update>
+	
+	<select id="getChatClaim" parameterType="_int" resultType="_int">
+		SELECT CLAIM_FROM
+		FROM CHATCLAIM
+		WHERE USER_NO = #{userNo}
+	</select>
+	
+	<select id="getChatLog" parameterType="_int" resultMap="chatResultSet">
+		SELECT ROOM_NO, NICKNAME AS "USER_NO", CHAT_CONTENT, CHAT_TIME
+		FROM TB_CHAT
+		JOIN TB_MEMBER USING (USER_NO)
+		WHERE ROOM_NO = #{roomNo}
+		ORDER BY CHAT_TIME ASC
+	</select>
+	
+	<select id="checkRequest" parameterType="_int" resultType="_int">
+		SELECT CLAIM_FROM
+		FROM CHATCLAIM
+		WHERE USER_NO = #{userNo}
+	</select>
+	
+	<insert id="insertChat" parameterType="chat">
+		INSERT INTO TB_CHAT
+		VALUES (#{chatContent}, #{chatTime}, #{writer}, #{roomNo})
+	</insert>
+	
+	<insert id="chatReport" parameterType="chatReport">
+		INSERT INTO CHAT_REPORT
+		VALUES (#{userNo}, #{reportedFrom}, #{reportedFor})
+	</insert>
+	
+	<insert id="insertChatClaim" parameterType="_int">
+		INSERT INTO CHATCLAIM
+		VALUES (#{userNo}, 0)
+	</insert>
+	
+	<update id="signalFromChatRoom1" parameterType="_int">
+		UPDATE CHATROOMS
+		SET ROOMTIME1 = SYSDATE
+		WHERE ROOM_NO = #{roomNo}
+	</update>
+	
+	<update id="signalFromChatRoom2" parameterType="_int">
+		UPDATE CHATROOMS
+		SET ROOMTIME2 = SYSDATE
+		WHERE ROOM_NO = #{roomNo}
+	</update>
+	
+	<select id="getRoomTimes" parameterType="_int" resultMap="roomTimeMap">
+		SELECT ROOMTIME1, ROOMTIME2
+		FROM CHATROOMS
+		WHERE ROOM_NO = #{roomNo}
+	</select>
+	
+	<update id="setRoomTime" parameterType="_int">
+		UPDATE CHATROOMS
+		SET ROOMTIME1 = SYSDATE, ROOMTIME2 = SYSDATE
+		WHERE ROOM_NO = #{roomNo}
+	</update>
+	
+	<select id="selectChatReportCount" resultType="_int">
+		SELECT COUNT(*) 
+		FROM CHAT_REPORT
+	</select>
+	
+	<select id="selectChatReportList" resultMap="chatReportResultSet">
+		SELECT USER_NO, REPORTED_FROM, REPORTED_FOR   
+		FROM CHAT_REPORT C
+		JOIN TB_MEMBER M USING (USER_NO)
+	</select>
+</mapper>

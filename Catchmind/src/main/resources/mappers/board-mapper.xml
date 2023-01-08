@@ -1,0 +1,410 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="boardMapper">
+
+	<resultMap type="post" id="postResultMap">
+		<result column="POST_NO" property="postNo"/>
+		<result column="POST_TITLE" property="postTitle"/>
+		<result column="POST_CONTENT" property="postContent"/>
+		<result column="POST_DATE" property="postDate"/>
+		<result column="POST_COUNT" property="postCount"/>
+		<result column="POST_STATUS" property="postStatus"/>
+		<result column="POST_WRITER" property="postWriter"/>
+		<result column="NICKNAME" property="nickName"/>
+	</resultMap>
+	<resultMap type="attach" id="attachResultMap">
+		<result column="ATT_NO" property="attNo"/>
+		<result column="ATT_ORIGIN" property="attOrigin"/>
+		<result column="ATT_CHANGE" property="attChange"/>
+		<result column="ATT_NOTICE" property="attNotice"/>
+		<result column="ATT_POST" property="attPost"/>
+		<result column="ATT_CATCH" property="attCatch"/>
+	</resultMap>
+	<resultMap type="reply" id="replyResultMap">
+		<result column="REPLY_NO" property="replyNo"/>
+		<result column="REPLY_CONTENT" property="replyContent"/>
+		<result column="REPLY_DATE" property="replyDate"/>
+		<result column="STATUS" property="status"/>
+		<result column="REPLY_WRITER" property="replyWriter"/>
+		<result column="REPLY_POST" property="replyPost"/>
+		<result column="NICKNAME" property="replyNickName"/>
+	</resultMap>
+	<resultMap type="report" id="reportResultMap">
+		<result column="REP_CONTENT" property="repContent"/>
+		<result column="CATCH_NO" property="catchNo"/>
+		<result column="POST_NO" property="postNo"/>
+		<result column="REPLY_NO" property="replyNo"/>
+	</resultMap>
+	<resultMap type="catch" id="catchResultMap">
+		<result column="CATCH_NO" property="catchNo"/>
+		<result column="CATCH_TITLE" property="catchTitle"/>
+		<result column="CATCH_CONTENT" property="catchContent"/>
+		<result column="CATCH_DATE" property="catchDate"/>
+		<result column="CATCH_COUNT" property="catchCount"/>
+		<result column="CATCH_STATUS" property="catchStatus"/>
+		<result column="CATCH_WRITER" property="catchWriter"/>
+		<result column="NICKNAME" property="nickName"/>
+	</resultMap>
+	<resultMap type="like" id="likeResultMap">
+		<result column="CATCH_NO" property="catchNo"/>
+		<result column="LIKE_USER" property="likeUser"/>
+	</resultMap>
+		<resultMap type="inquiry" id="inquiryResultMap">
+		<result column="QA_NO" property="qaNo"/>
+		<result column="Q_TITLE" property="qaTitle"/>
+		<result column="Q_CONTENT" property="qaContent"/>
+		<result column="Q_DATE" property="qaDate"/>
+		<result column="A_CONTENT" property="anContent"/>
+		<result column="Q_ANSWERDATE" property="qaAnswerDate"/>
+		<result column="Q_WRITER" property="qaWriter"/>
+		<result column="Q_ANSWERYN" property="qaAnswerYn"/>
+	</resultMap>
+	
+	<select id="selectListCount" resultType="_int">
+		SELECT COUNT(*)
+		FROM TB_POST
+		WHERE POST_STATUS='Y'
+	</select>
+	
+	<select id="selectList" resultMap="postResultMap">
+		SELECT POST_NO, POST_TITLE, POST_CONTENT, TO_CHAR(POST_DATE, 'YYYY-MM-DD') "POST_DATE", POST_COUNT, POST_STATUS, NICKNAME
+		FROM TB_POST
+		JOIN TB_MEMBER ON (POST_WRITER=USER_NO)
+		WHERE POST_STATUS = 'Y'
+		ORDER BY POST_DATE DESC, POST_NO DESC
+	</select>
+	
+	<insert id="insertPost" parameterType="post">
+		INSERT INTO TB_POST(POST_NO
+		, POST_TITLE, POST_CONTENT, POST_DATE
+		, POST_COUNT, POST_STATUS, POST_WRITER)
+		VALUES (SEQ_PNO.NEXTVAL
+		, #{postTitle}, #{postContent}, SYSDATE
+		, 0, 'Y', #{postWriter}
+		)
+	</insert>
+	
+	<insert id="insertFile" parameterType="attach">
+		INSERT INTO TB_ATTACHMENT(ATT_NO, ATT_ORIGIN, ATT_CHANGE, ATT_POST)
+		VALUES (SEQ_ANO.NEXTVAL, #{attOrigin}, #{attChange}, SEQ_PNO.CURRVAL)
+	</insert>
+	
+	
+	<update id="increaseCount" parameterType="_int">
+		UPDATE TB_POST
+		SET POST_COUNT = POST_COUNT + 1
+		WHERE POST_NO = #{postNo}
+		AND POST_STATUS = 'Y'
+	</update>
+	
+	<select id="selectPost" parameterType="_int" resultMap="postResultMap">
+	SELECT POST_NO, POST_TITLE, POST_CONTENT, TO_CHAR(POST_DATE, 'YYYY-MM-DD') "POST_DATE", POST_COUNT, POST_WRITER, POST_STATUS, NICKNAME
+	FROM TB_POST
+	JOIN TB_MEMBER ON (POST_WRITER=USER_NO)
+	WHERE POST_NO = #{postNo}
+	</select>
+	
+	<select id="selectFile" parameterType="_int" resultMap="attachResultMap">
+	SELECT ATT_NO, ATT_CHANGE, ATT_POST, ATT_ORIGIN
+	FROM TB_ATTACHMENT
+	WHERE ATT_POST = #{attPost}
+	</select>
+	
+	<update id="deletePost" parameterType="_int">
+		UPDATE TB_POST
+		SET POST_STATUS = 'N'
+		WHERE POST_NO= #{postNo}
+	</update>
+	
+	<insert id="insertReply" parameterType="reply">
+	 INSERT INTO TB_REPLY (REPLY_NO, REPLY_CONTENT, REPLY_DATE, STATUS, REPLY_WRITER, REPLY_POST)
+	 VALUES(SEQ_RNO.NEXTVAL, #{replyContent}, SYSDATE, 'Y', #{replyWriter}, #{replyPost})
+	</insert>
+	
+	<!-- SELECT 절에 REPLY_DATE 컬럼 추가함 : 수빈(7/18) -->
+	<select id="selectReplyList" parameterType="_int" resultMap="replyResultMap">
+	SELECT REPLY_NO, REPLY_WRITER, REPLY_CONTENT, TO_CHAR(REPLY_DATE, 'YYYY-MM-DD hh:mm') "REPLY_DATE", NICKNAME
+	FROM TB_REPLY
+	JOIN TB_MEMBER ON (REPLY_WRITER=USER_NO)
+	WHERE TB_REPLY.STATUS='Y'
+	AND REPLY_POST = #{postNo}
+	ORDER BY REPLY_NO DESC
+	</select>
+	
+	<update id="deleteReply" parameterType="_int">
+		UPDATE TB_REPLY
+		SET STATUS = 'N'
+		WHERE REPLY_NO= #{replyNo}
+	</update>
+	
+	<insert id="insertReport" parameterType="report">
+		INSERT INTO TB_REPORT (REP_CONTENT, CATCH_NO, POST_NO, REPLY_NO)
+		VALUES (#{repContent}, #{catchNo}, #{postNo}, #{replyNo})
+	</insert>
+	
+	<update id="updatePost" parameterType="post">
+		UPDATE TB_POST
+		SET POST_TITLE= #{postTitle}
+		, POST_CONTENT= #{postContent}
+		WHERE POST_NO= #{postNo}
+	</update>
+	
+	<update id="updateFile" parameterType="attach">
+		UPDATE TB_ATTACHMENT
+		SET ATT_ORIGIN = #{attOrigin}
+		, ATT_CHANGE = #{attChange}
+		, ATT_NOTICE = #{attNotice}
+		, ATT_POST = #{attPost}
+		, ATT_CATCH = #{attCatch}
+		WHERE ATT_NO = #{attNo}
+	</update>
+	
+	<delete id="deleteFile" parameterType="attach">
+		DELETE TB_ATTACHMENT
+		WHERE ATT_NO = #{attNo}
+	</delete>
+	
+	<insert id="addFile" parameterType="attach">
+		INSERT INTO TB_ATTACHMENT(ATT_NO, ATT_ORIGIN, ATT_CHANGE, ATT_POST)
+		VALUES (SEQ_ANO.NEXTVAL, #{attOrigin}, #{attChange}, #{attPost})
+	</insert>
+	
+	
+	<!-- 내 글 관리 -->
+	<select id="selectMyList" parameterType="_int" resultMap="postResultMap">
+		SELECT POST_NO, POST_TITLE, POST_CONTENT, TO_CHAR(POST_DATE, 'YYYY-MM-DD') "POST_DATE", POST_COUNT, POST_STATUS, NICKNAME
+		FROM TB_POST
+		JOIN TB_MEMBER ON (POST_WRITER=USER_NO)
+		WHERE POST_STATUS = 'Y' AND POST_WRITER = #{userNo}
+		ORDER BY POST_DATE DESC, POST_NO DESC
+	</select>
+	
+	<select id="selectMyListCount" resultType="_int">
+		SELECT COUNT(*)
+		FROM TB_POST
+		WHERE POST_STATUS='Y' AND POST_WRITER = #{userNo}
+	</select>
+	
+	<select id="selectMyCatchList" parameterType="_int" resultMap="catchResultMap">
+		SELECT CATCH_NO, CATCH_TITLE, CATCH_CONTENT, TO_CHAR(CATCH_DATE, 'YYYY-MM-DD') "CATCH_DATE", CATCH_COUNT, CATCH_STATUS, NICKNAME
+		FROM TB_CATCH
+		JOIN TB_MEMBER ON (CATCH_WRITER=USER_NO)
+		WHERE CATCH_STATUS = 'Y' AND CATCH_WRITER = #{userNo}
+		ORDER BY CATCH_DATE DESC, CATCH_NO DESC
+	</select>
+	
+	<select id="selectMyCatchCount" resultType="_int">
+		SELECT COUNT(*)
+		FROM TB_CATCH
+		WHERE CATCH_STATUS='Y' AND CATCH_WRITER = #{userNo}
+	</select>
+	
+	<select id="selectMyQAList" parameterType="_int" resultMap="inquiryResultMap">
+		SELECT QA_NO, Q_TITLE, Q_CONTENT, TO_CHAR(Q_DATE, 'YYYY-MM-DD') "Q_DATE", A_CONTENT, TO_CHAR(Q_ANSWERDATE, 'YYYY-MM-DD') Q_ANSWERDATE, Q_WRITER, Q_ANSWERYN
+		FROM TB_QA
+		WHERE Q_WRITER = #{userNo}
+		ORDER BY Q_ANSWERDATE DESC, QA_NO DESC
+	</select>
+	
+	<select id="selectMyQACount" resultType="_int">
+		SELECT COUNT(*)
+		FROM TB_QA
+		WHERE Q_WRITER = #{userNo}
+	</select>
+	
+	<!-- CATCH -->
+	<select id="selectCatchListCount" resultType="_int">
+		SELECT COUNT(*)
+		FROM TB_CATCH
+		WHERE CATCH_STATUS='Y'
+	</select>
+	
+	<select id="selectCatchList" parameterType="_int" resultMap="catchResultMap">
+		SELECT CATCH_NO, CATCH_TITLE, CATCH_CONTENT, TO_CHAR(CATCH_DATE, 'YYYY-MM-DD') "CATCH_DATE", CATCH_COUNT, CATCH_STATUS, NICKNAME
+		FROM TB_CATCH
+		JOIN TB_MEMBER ON (CATCH_WRITER=USER_NO)
+		WHERE CATCH_STATUS = 'Y'
+		ORDER BY CATCH_DATE DESC, CATCH_NO DESC
+	</select>
+	
+	<select id="selectCatch" parameterType="_int" resultMap="catchResultMap">
+	SELECT CATCH_NO, CATCH_TITLE, CATCH_CONTENT, TO_CHAR(CATCH_DATE, 'YYYY-MM-DD') "CATCH_DATE", CATCH_COUNT, CATCH_WRITER, CATCH_STATUS, NICKNAME
+	FROM TB_CATCH
+	JOIN TB_MEMBER ON (CATCH_WRITER=USER_NO)
+	WHERE CATCH_NO = #{catchNo}
+	</select>
+	
+	<select id="selectFiles" parameterType="_int" resultMap="attachResultMap">
+	SELECT ATT_NO, ATT_CHANGE, ATT_CATCH, ATT_ORIGIN
+	FROM TB_ATTACHMENT
+	WHERE ATT_CATCH = #{attCatch}
+	</select>
+	
+	<select id="selectFileTop" parameterType="_int" resultMap="attachResultMap">
+	SELECT ATT_NO, ATT_CHANGE, ATT_CATCH, ATT_ORIGIN
+	FROM TB_ATTACHMENT
+	WHERE ATT_CATCH = #{attCatch} AND ROWNUM=1
+	ORDER BY ATT_NO DESC
+	</select>
+	
+	<insert id="insertCatch" parameterType="catch">
+		INSERT INTO TB_CATCH(CATCH_NO
+		, CATCH_TITLE, CATCH_CONTENT, CATCH_DATE
+		, CATCH_COUNT, CATCH_STATUS, CATCH_WRITER)
+		VALUES (SEQ_CNO.NEXTVAL
+		, #{catchTitle}, #{catchContent}, SYSDATE
+		, 0, 'Y', #{catchWriter}
+		)
+	</insert>
+	
+	<select id="getCatchNo" resultType="int">
+		SELECT SEQ_CNO.CURRVAL
+		FROM DUAL
+	</select>
+	
+	<insert id="insertFiles" parameterType="attach">
+		INSERT INTO TB_ATTACHMENT(ATT_NO, ATT_ORIGIN, ATT_CHANGE, ATT_CATCH)
+		VALUES (SEQ_ANO.NEXTVAL, #{attOrigin}, #{attChange}, #{attCatch})
+	</insert>
+	
+	<update id="deleteCatch" parameterType="_int">
+		UPDATE TB_CATCH
+		SET CATCH_STATUS = 'N'
+		WHERE CATCH_NO= #{catchNo}
+	</update>
+	
+	<update id="increaseCatchCount" parameterType="_int">
+		UPDATE TB_CATCH
+		SET CATCH_COUNT = CATCH_COUNT + 1
+		WHERE CATCH_NO = #{catchNo}
+		AND CATCH_STATUS = 'Y'
+	</update>
+	
+	<update id="decreaseCatchCount" parameterType="like">
+		UPDATE TB_CATCH
+		SET CATCH_COUNT = CATCH_COUNT - 1
+		WHERE CATCH_NO = #{catchNo}
+		AND CATCH_STATUS = 'Y'
+	</update>
+	
+	<delete id="deleteFiles" parameterType="attach">
+		DELETE TB_ATTACHMENT
+		WHERE ATT_CATCH = #{attCatch}
+	</delete>
+	
+	<insert id="addFiles" parameterType="attach">
+		INSERT INTO TB_ATTACHMENT(ATT_NO, ATT_ORIGIN, ATT_CHANGE, ATT_CATCH)
+		VALUES (SEQ_ANO.NEXTVAL, #{attOrigin}, #{attChange}, #{attCatch})
+	</insert>
+	
+	<update id="updateCatch" parameterType="catch">
+		UPDATE TB_CATCH
+		SET CATCH_TITLE= #{catchTitle}
+		, CATCH_CONTENT= #{catchContent}
+		WHERE CATCH_NO= #{catchNo}
+	</update>
+	
+	<update id="updateFiles" parameterType="attach">
+		UPDATE TB_ATTACHMENT
+		SET ATT_ORIGIN = #{attOrigin}
+		, ATT_CHANGE = #{attChange}
+		, ATT_NOTICE = #{attNotice}
+		, ATT_POST = #{attPost}
+		, ATT_CATCH = #{attCatch}
+		WHERE ATT_NO = #{attNo}
+	</update>
+	
+	<insert id="insertLike" parameterType="like">
+		INSERT INTO TB_LIKE(CATCH_NO, LIKE_USER)
+		VALUES(#{catchNo},#{likeUser})
+	</insert>
+	<delete id="deleteLike" parameterType="like">
+		DELETE FROM TB_LIKE
+		WHERE CATCH_NO = #{catchNo} AND LIKE_USER  = #{likeUser}
+	</delete>
+	<select id="selectLike" parameterType="like" resultType="int">
+		SELECT COUNT(*)
+		FROM TB_LIKE
+		WHERE CATCH_NO = #{catchNo} AND LIKE_USER = #{likeUser}
+	</select>
+	
+	<select id="likeCount" parameterType="_int" resultType="int">
+		SELECT COUNT(*)
+		FROM TB_LIKE
+		WHERE CATCH_NO = #{catchNo}
+	</select>
+	
+	<update id="updateQA" parameterType="inquiry">
+		UPDATE TB_QA
+		SET Q_TITLE = #{qaTitle}, Q_CONTENT = #{qaContent}
+		WHERE QA_NO = #{qaNo}
+	</update>
+	
+	<delete id="deleteQA" parameterType="_int">
+		DELETE FROM TB_QA
+		WHERE QA_NO = #{qaNo}
+	</delete>
+	
+	
+	<!-- ############################ 관리자 페이지 ############################ -->
+	<!-- 관리자: 에브리타임 게시글 개수 조회(유진) -->
+	<select id="selectPostCount" resultType="int">
+		SELECT COUNT(*) 
+		FROM TB_POST 
+	</select>
+	
+	<!-- 관리자:에브리타임 전체 조회(유진) -->
+	<select id="selectPostList" parameterType="_int" resultMap="postResultMap">
+		SELECT POST_NO, POST_TITLE, POST_CONTENT, TO_CHAR(POST_DATE, 'YYYY-MM-DD') "POST_DATE", POST_COUNT, POST_STATUS, NICKNAME  
+		FROM TB_POST 
+		JOIN TB_MEMBER ON (USER_NO=POST_WRITER) 
+		ORDER BY POST_DATE DESC, POST_NO DESC
+	</select>
+	
+	<update id="recoverfncPost" parameterType="_int">
+		UPDATE TB_POST
+		SET POST_STATUS = 'Y'
+		WHERE POST_NO = #{postNo}
+	</update>
+	
+	<update id="deletefncPost" parameterType="_int">
+		UPDATE TB_POST
+		SET POST_STATUS = 'N'
+		WHERE POST_NO =#{postNo}
+	</update>
+	
+	<select id="selectadCatchCount" resultType="int">
+		SELECT COUNT(*) 
+		FROM TB_CATCH
+	</select>
+	
+	<select id="selectadCatchList" parameterType="_int" resultMap="catchResultMap">
+		SELECT CATCH_NO, CATCH_TITLE, CATCH_CONTENT, TO_CHAR(CATCH_DATE, 'YYYY-MM-DD') "CATCH_DATE", CATCH_COUNT, CATCH_STATUS, NICKNAME
+		FROM TB_CATCH
+		JOIN TB_MEMBER ON (CATCH_WRITER=USER_NO)
+		ORDER BY CATCH_DATE DESC, CATCH_NO DESC
+	</select>
+	
+	<update id="recoverfncCatch" parameterType="_int">
+		UPDATE TB_CATCH
+		SET CATCH_STATUS = 'Y'
+		WHERE CATCH_NO = #{catchNo}
+	</update>
+	
+	<update id="deletefncCatch" parameterType="_int">
+		UPDATE TB_CATCH
+		SET CATCH_STATUS = 'N'
+		WHERE CATCH_NO =#{catchNo}
+	</update>
+	
+	<select id="selectReportCount" resultType="int">
+		SELECT COUNT(*) 
+		FROM TB_REPORT
+	</select>
+	
+	<select id="selectReportList" resultMap="reportResultMap">
+		SELECT * 
+		FROM TB_REPORT 
+	</select>
+	
+</mapper>
