@@ -71,11 +71,11 @@ Scale and layout : 125%
 
 ## UML
 ![starUml](https://github.com/hwkim51/Catchmind/blob/main/Catchmind/src/main/webapp/resources/images/github_uml.PNG)
-#### 구현을 위한 참고 자료로 실제 구현된 결과물과 다를 수 있음.
+#### 구현을 위한 참고 자료로 실제 구현된 결과물과 다를 수 있습니다.
 
 ## erdCloud
 [![erdCloud](https://github.com/hwkim51/Catchmind/blob/main/Catchmind/src/main/webapp/resources/images/github_erd.png)](https://www.erdcloud.com/d/SATcjFrWwEMvSGuXy)
-#### 구현을 위한 참고 자료로 실제 구현된 결과물과 다를 수 있음.
+#### 구현을 위한 참고 자료로 실제 구현된 결과물과 다를 수 있습니다.
 
 ## 사이트 소개
 ![1](https://github.com/hwkim51/Catchmind/blob/main/Catchmind/src/main/webapp/resources/images/github1.png)  
